@@ -28,11 +28,13 @@ function init() {
 
     scene.add(directionalLight);
 
+    var planetTexture = THREE.ImageUtils.loadTexture('images/earth_atmos_2048.jpg');
+
     geometry = new THREE.SphereGeometry(radius, 100, 50);
 
     meshPlanet = new THREE.Mesh(
         geometry,
-        new THREE.MeshLambertMaterial({ color: 0xff3333 })
+        new THREE.MeshLambertMaterial({ map: planetTexture })
     );
 
     scene.add(meshPlanet);
