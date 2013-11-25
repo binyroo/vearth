@@ -8,6 +8,7 @@ var SCREEN_HEIGHT = window.innerHeight;
 var container;
 var camera, scene, renderer, stats;
 var geometry, meshPlanet;
+var directionalLight;
 
 init();
 animate();
@@ -22,11 +23,16 @@ function init() {
 
     scene = new THREE.Scene();
 
+    directionalLight = new THREE.DirectionalLight(0xffffff);
+    directionalLight.position.set(-1, 0, 1);
+
+    scene.add(directionalLight);
+
     geometry = new THREE.SphereGeometry(radius, 100, 50);
 
     meshPlanet = new THREE.Mesh(
         geometry,
-        new THREE.MeshBasicMaterial({ color: 0xff3333 })
+        new THREE.MeshLambertMaterial({ color: 0xff3333 })
     );
 
     scene.add(meshPlanet);
