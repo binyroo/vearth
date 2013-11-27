@@ -13,6 +13,12 @@ var directionalLight;
 
 var cameraQuaternion = new THREE.Quaternion();
 
+// 관성을 적용하기 위한 마지막 변화량 쿼터니언과 관성 팩터
+var deltaQuaternion = null;
+var inertiaFactor = 0.05;
+
+var isDragging = false;
+
 init();
 animate();
 
@@ -73,14 +79,13 @@ function onMouseDown(e) {
     if (pickedPoint) {
 
         positionOnMouseDown = pickedPoint;
+        deltaQuaternion = null;
+        isDragging = false;
 
         document.addEventListener('mousemove', onMouseMove, false);
         document.addEventListener('mouseup', onMouseUp, false);
         document.addEventListener('mouseout', onMouseOut, false);
 
-    } else {
-
-        positionOnMouseDown = null;
     }
 }
 
@@ -92,12 +97,23 @@ function onMouseMove(e) {
 
         var q = quaternionFromPosition(positionOnMouseDown, pickedPoint);
 
+        // 마지막 각의 변화량을 저장한다.
+        deltaQuaternion = q.clone();
+
         cameraQuaternion = q.multiply(cameraQuaternion);
+
+        isDragging = true;
+
+    } else {
+
+        isDragging = false;
     }
+
 }
 
 function onMouseUp(e) {
 
+    isDragging = false;
     document.removeEventListener('mousemove', onMouseMove, false);
     document.removeEventListener('mouseup', onMouseUp, false);
     document.removeEventListener('mouseout', onMouseOut, false);
@@ -105,6 +121,7 @@ function onMouseUp(e) {
 
 function onMouseOut(e) {
 
+    isDragging = false;
     document.removeEventListener('mousemove', onMouseMove, false);
     document.removeEventListener('mouseup', onMouseUp, false);
     document.removeEventListener('mouseout', onMouseOut, false);
@@ -165,6 +182,19 @@ function quaternionFromPosition(p1, p2) {
 }
 
 function updateCameraMatrix() {
+
+    // 마우스 드래그가 끝나면 마지막 각의 변화량을 가지고 관성을 적용한다.
+    if (deltaQuaternion && !isDragging) {
+
+        // 마지막 변화량을 서서히 줄인다.
+        deltaQuaternion.slerp(new THREE.Quaternion(), inertiaFactor);
+        // 조금씩 줄어드는 변화량을 카메라 쿼터니언에 더한다.
+        cameraQuaternion = deltaQuaternion.clone().multiply(cameraQuaternion);
+
+        if (deltaQuaternion.w === 1) {
+            deltaQuaternion = null;
+        }
+    }
 
     var positionMatrix = new THREE.Matrix4(),
         defaultPosition = new THREE.Vector3(0, 0, defaultCameraDistance);
